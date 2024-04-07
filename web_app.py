@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 from PIL import Image
-from model import load_model_and_predict
+from app_model import load_model_and_predict
 
 st.write(
     """
