@@ -1,48 +1,75 @@
-import json
-import joblib
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.compose import make_column_transformer
-from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from pickle import dump, load
 
-PATH_DATA = "data/all_v2.csv"
-PATH_MODEL = "data/lr_pipeline.sav"
-PATH_UNIQUE_VALUES = "data/unique_values.json"
-drop_cols = ["date", "time", "geo_lat", "geo_lon", "region"]
-categorical_features = ["building_type", "object_type"]
-numeric_features = ["level", "levels", "rooms", "area", "kitchen_area"]
-passthrough_feats = ["price"]
 
-df = pd.read_csv(PATH_DATA)
-df = df.drop(columns=drop_cols)
+def open_data(path="data/data_loan"):
+    df = pd.read_csv('data/data_loan.csv')
+    df = df[['Gender', 'Married', 'Dependents',
+        'Education', 'Self_Employed', 'ApplicantIncome', 'CoapplicantIncome',
+        'LoanAmount', 'Loan_Amount_Term', 'Credit_History', 'Property_Area',
+        'Loan_Status']]
+    return df
 
-df = df[df.price.between(df.price.quantile(0.05), df.price.quantile(0.05))]
-df = df[df.area.between(df.area.quantile(0.01), df.area.quantile(0.99))]
-df = df[df.rooms > -2]
 
-y = df["price"]
-X = df.drop(columns="price", axis=1)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=10
-)
+def split_data(df):
+    y_df = df['Loan_Status']
+    X_df = df.drop(columns=['Loan_Status'])
+    X_train, X_test, y_train, y_test = train_test_split(X_df, y_df, test_size=0.1, random_state=42)
+    return X_train, X_test, y_train, y_test
 
-preprocessor = make_column_transformer(
-    (StandardScaler(), numeric_features),
-    (OneHotEncoder(handle_unknown="ignore", drop="first"), categorical_features),
-)
-clf = make_pipeline(preprocessor, LinearRegression())
 
-clf.fit(X_train, y_train)
-y_prediction = clf.predict(X_test)
-print(mean_absolute_error(y_test, y_prediction))
+def preprocess_data(df):
+    df = df.dropna()
+    binary_cols = ['Married', 'Loan_Status']
+    categ_cols = ['Gender', 'Dependents', 'Education', 'Self_Employed', 'Loan_Amount_Term', 'Credit_History', 'Property_Area']
 
-joblib.dump(clf, PATH_MODEL)
+    for col in categ_cols:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
+    for col in binary_cols:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
 
-dict_unique = {key: X[key].unique().tolist() for key in X.columns}
+    X_train, X_test, y_train, y_test = split_data(df)
+    return X_train, X_test, y_train, y_test
 
-with open(PATH_INIQUE_VALUES, "w") as file:
-    json.dump(dict_unique, file)
 
+def fit_and_save_model(X_train, X_test, y_train, y_test, path='data/model_weights.mw'):
+    model = RandomForestClassifier(n_estimators=100, max_depth=3, min_samples_leaf=10, random_state=42)
+    model.fit(X_train, y_train)
+    test_prediction = model.predict(X_test)
+    accuracy = accuracy_score(test_prediction, y_test)
+    print(f"Model accuracy is {accuracy:.2f}")
+    with open(path, "wb") as file:
+        dump(model, file)
+    print(f"Model was saved to {path}")
+
+def load_model_and_predict(df, path='data/model_weights.mw'):
+    with open(path, "rb") as file:
+        model = load(file)
+    prediction = model.predict(df)[0]
+    prediction_proba = model.predict_proba(df)[0]
+    encode_prediction_proba = {
+        0: "Вам не повезло",
+        1: "Вам повезло"
+    }
+    encode_prediction = {
+        0: "К сожалению, вам отказано в кредите :/",
+        1: "Вам одобрен кредит! :)"
+    }
+    prediction_data = {}
+    for key, value in encode_prediction_proba.items():
+        prediction_data.update({value: prediction_proba[key]})
+    prediction_df = pd.DataFrame(prediction_data, index=[0])
+    prediction = encode_prediction[prediction]
+    return prediction, prediction_df
+
+
+if __name__ == "__main__":
+    df = open_data()
+    X_train, X_test, y_train, y_test = preprocess_data(df)
+    fit_and_save_model(X_train, X_test, y_train, y_test)
