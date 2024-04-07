@@ -12,7 +12,7 @@ st.write(
 )
 
 def process_main_page():
-    image = Image.open('data/банк.jpg')
+    image = Image.open('банк.jpg')
     st.image(image)
     personal_info = process_side_bar_inputs()
     if st.button("Предсказать"):
