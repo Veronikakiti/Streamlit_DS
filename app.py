@@ -7,7 +7,7 @@ st.write(
     """
     # Предсказание кредитоспособности клиента
 
-    Определяем, кому из клиентов выдадут кредит, а кому - нет
+    Определим, одобрит ли банк Вам кредит или нет
     """
 )
 
@@ -34,7 +34,6 @@ def process_side_bar_inputs():
     st.write("## Ваши данные")
     st.write(user_input_df)
 
-    # Для примерной конвертации под американский датасет, на котором модель обучалась
     user_input_df['ApplicantIncome'] = user_input_df['ApplicantIncome'] * 50
     user_input_df['CoapplicantIncome'] = user_input_df['CoapplicantIncome'] * 50
     user_input_df['LoanAmount'] = user_input_df['LoanAmount'] / 10
@@ -44,17 +43,17 @@ def process_side_bar_inputs():
 
 def sidebar_input_features():
     sex = st.sidebar.selectbox("Пол", ("Мужской", "Женский"))
-    married = st.sidebar.selectbox("Женат/замужем", ("Нет", "Да"))
-    education = st.sidebar.selectbox("Высшее образование", ("Есть", "Нет"))
-    dependents = st.sidebar.slider("Иждивенцы: количество человек, зависящих от клиента", min_value=0, max_value=10,
+    married = st.sidebar.selectbox("Замужем/женат", ("Нет", "Да"))
+    education = st.sidebar.selectbox("Высшее образование", ("Есть", "Не имею"))
+    dependents = st.sidebar.slider("Количество иждивенцев", min_value=0, max_value=10,
                                    value=0, step=1)
-    self_employed = st.sidebar.selectbox("Самозанятый", ("Нет", "Да"))
-    income = st.sidebar.number_input("Ежемесячный доход заемщика, тыс. руб.", 0, 10000, 70)
+    self_employed = st.sidebar.selectbox("Вы самозанятый?", ("Нет", "Да"))
+    income = st.sidebar.number_input("Ежемесячный доход заемщика, тыс. руб.", 0, 10000, 50)
     co_income = st.sidebar.number_input("Ежемесячный доход созаемщика, тыс. руб.", 0, 10000, 0)
-    loan_amount = st.sidebar.number_input("Размер кредита, тыс. руб.", 0, 100000, 600)
-    loan_term = st.sidebar.number_input("Срок кредита в месяцах", 0, 1200, 60)
+    loan_amount = st.sidebar.number_input("Размер кредита, тыс. руб.", 0, 100000, 500)
+    loan_term = st.sidebar.number_input("Срок кредита в месяцах", 0, 1200, 12)
     credit_history = st.sidebar.selectbox("Есть кредитная история", ("Нет", "Да"))
-    area = st.sidebar.selectbox("Заемщик проживает в", ("Городе", "Посёлке городского типа", "Сельской местности"))
+    area = st.sidebar.selectbox("Где проживает заемщик?", ("Город", "Поселок городского типа", "Сельская местность"))
 
     translatetion = {
         "Мужской": 1,
@@ -62,9 +61,10 @@ def sidebar_input_features():
         "Есть": 1,
         "Да": 1,
         "Нет": 0,
-        "Городе": 2,
-        "Посёлке городского типа": 1,
-        "Сельской местности": 0
+        "Не имею": 0,
+        "Город": 2,
+        "Поселок городского типа": 1,
+        "Сельская местность": 0
     }
 
     data = {

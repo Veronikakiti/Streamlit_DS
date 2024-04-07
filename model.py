@@ -58,8 +58,8 @@ def load_model_and_predict(df, path='model_weights.mw'):
         1: "Вам повезло"
     }
     encode_prediction = {
-        0: "К сожалению, вам отказано в кредите :/",
-        1: "Вам одобрен кредит! :)"
+        0: "Увы, банк отказал Вам в кредите",
+        1: "Ура! Вам одобрен кредит!"
     }
     prediction_data = {}
     for key, value in encode_prediction_proba.items():
