@@ -6,8 +6,8 @@ from sklearn.metrics import accuracy_score
 from pickle import dump, load
 
 
-def open_data(path="data/data_loan"):
-    df = pd.read_csv('data/data_loan.csv')
+def open_data(path="data_loan"):
+    df = pd.read_csv('data_loan.csv')
     df = df[['Gender', 'Married', 'Dependents',
         'Education', 'Self_Employed', 'ApplicantIncome', 'CoapplicantIncome',
         'LoanAmount', 'Loan_Amount_Term', 'Credit_History', 'Property_Area',
@@ -38,7 +38,7 @@ def preprocess_data(df):
     return X_train, X_test, y_train, y_test
 
 
-def fit_and_save_model(X_train, X_test, y_train, y_test, path='data/model_weights.mw'):
+def fit_and_save_model(X_train, X_test, y_train, y_test, path='model_weights.mw'):
     model = RandomForestClassifier(n_estimators=100, max_depth=3, min_samples_leaf=10, random_state=42)
     model.fit(X_train, y_train)
     test_prediction = model.predict(X_test)
@@ -48,7 +48,7 @@ def fit_and_save_model(X_train, X_test, y_train, y_test, path='data/model_weight
         dump(model, file)
     print(f"Model was saved to {path}")
 
-def load_model_and_predict(df, path='data/model_weights.mw'):
+def load_model_and_predict(df, path='model_weights.mw'):
     with open(path, "rb") as file:
         model = load(file)
     prediction = model.predict(df)[0]
